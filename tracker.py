@@ -4,9 +4,12 @@ import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter
 import datetime
 
+
+CURRENCY = "EUR"
+
 def get_prices(coin):
     crypto_data = requests.get(
-        "https://min-api.cryptocompare.com/data/pricemultifull?fsyms={}&tsyms=USD".format(coin)).json()["DISPLAY"][coin]["USD"]
+        "https://min-api.cryptocompare.com/data/pricemultifull?fsyms={}&tsyms={}".format(coin, CURRENCY)).json()["DISPLAY"][coin][CURRENCY]
     data = {
         "ticker": coin,
         "price": crypto_data["PRICE"],
@@ -21,9 +24,17 @@ def get_prices(coin):
 
     return data
 
+def get_percentage_info(coin):
+    crypto_data = requests.get(
+        "https://min-api.cryptocompare.com/data/pricemultifull?fsyms={}&tsyms={}".format(coin, CURRENCY)).json()["DISPLAY"][coin][CURRENCY]
+    print(crypto_data)
+
+    return crypto_data['CHANGEPCT24HOUR'], crypto_data['CHANGEPCTDAY'], crypto_data['CHANGEPCTHOUR']
+
+
 def get_graph_info(rate,coin):
     crypto_data = requests.get(
-        "https://min-api.cryptocompare.com/data/v2/histo{}?fsym={}&tsym=USD&limit=10".format(rate,coin)).json()
+        "https://min-api.cryptocompare.com/data/v2/histo{}?fsym={}&tsym={}&limit=10".format(rate,coin,CURRENCY)).json()
     data = {}
     times = []
     price = []
@@ -47,7 +58,7 @@ def get_graph_info(rate,coin):
     elif rate == "minute":
         label = "Minute"
     plt.ylabel('{} Close Prices'.format(label))
-    
+
     plt.plot_date(times, price)
     plt.plot(times,price)
     ax = plt.gca()
@@ -57,24 +68,26 @@ def get_graph_info(rate,coin):
     ax.xaxis.set_major_formatter(date_form)
     path = "graphs/{}.png".format(coin)
     plt.savefig(path)
-    
+
     return path
 
 def get_top_coins(count):
-    crypto_coins = requests.get(f"https://min-api.cryptocompare.com/data/top/mktcapfull?limit={count}&tsym=USD").json()["Data"]
+    crypto_coins = requests.get(f"https://min-api.cryptocompare.com/data/top/mktcapfull?limit={count}&tsym={CURRENCY}").json()["Data"]
     coins = [{} for i in range(int(count))]
     for i in range(len(crypto_coins)):
         data = {
             "ticker": crypto_coins[i]["CoinInfo"]["Name"],
             "name": crypto_coins[i]["CoinInfo"]["FullName"],
-            "price": crypto_coins[i]["DISPLAY"]["USD"]["PRICE"],
-            "market_cap": crypto_coins[i]["DISPLAY"]["USD"]["MKTCAP"],
-            "volume_day": crypto_coins[i]["DISPLAY"]["USD"]["VOLUMEDAYTO"],
-            "day_open": crypto_coins[i]["DISPLAY"]["USD"]["OPENDAY"],
-            "day_high": crypto_coins[i]["DISPLAY"]["USD"]["HIGHDAY"],
-            "day_low": crypto_coins[i]["DISPLAY"]["USD"]["LOWDAY"]
+            "price": crypto_coins[i]["DISPLAY"][CURRENCY]["PRICE"],
+            "market_cap": crypto_coins[i]["DISPLAY"][CURRENCY]["MKTCAP"],
+            "volume_day": crypto_coins[i]["DISPLAY"][CURRENCY]["VOLUMEDAYTO"],
+            "day_open": crypto_coins[i]["DISPLAY"][CURRENCY]["OPENDAY"],
+            "day_high": crypto_coins[i]["DISPLAY"][CURRENCY]["HIGHDAY"],
+            "day_low": crypto_coins[i]["DISPLAY"][CURRENCY]["LOWDAY"],
+            "perc_24_hrs": crypto_coins[i]["DISPLAY"][CURRENCY]["CHANGEPCT24HOUR"],
+            "perc_today": crypto_coins[i]["DISPLAY"][CURRENCY]["CHANGEPCTDAY"],
+            "perc_hour": crypto_coins[i]["DISPLAY"][CURRENCY]["CHANGEPCTHOUR"]
         }
         coins[i] = data
 
     return coins
-
