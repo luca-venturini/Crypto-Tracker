@@ -259,7 +259,7 @@ updater.dispatcher.add_handler(CallbackQueryHandler(day_open, pattern='{"action"
 updater.dispatcher.add_handler(CallbackQueryHandler(day_high, pattern='{"action": "dayHigh"'))
 updater.dispatcher.add_handler(CallbackQueryHandler(day_low, pattern='{"action": "dayLow"'))
 updater.dispatcher.add_handler(CallbackQueryHandler(percentage, pattern='{"action": "percentage"'))
-updater.dispatcher.add_handler(CallbackQueryHandler(minute, pattern='{"action": "minute"'))
+updater.dispatcher.add_handler(CallbackQueryHandler(minute, pattern='{"action": "min"'))
 updater.dispatcher.add_handler(CallbackQueryHandler(hour, pattern='{"action": "hour"'))
 updater.dispatcher.add_handler(CallbackQueryHandler(day, pattern='{"action": "day"'))
 
