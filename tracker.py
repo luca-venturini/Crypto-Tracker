@@ -25,9 +25,10 @@ def get_prices(coin):
     return data
 
 def get_percentage_info(coin):
-    crypto_data = requests.get(
-        "https://min-api.cryptocompare.com/data/pricemultifull?fsyms={}&tsyms={}".format(coin, CURRENCY)).json()["DISPLAY"][coin][CURRENCY]
-    print(crypto_data)
+    try:
+        crypto_data = requests.get("https://min-api.cryptocompare.com/data/pricemultifull?fsyms={}&tsyms={}".format(coin, CURRENCY)).json()["DISPLAY"][coin][CURRENCY]
+    except:
+        raise Exception("Crypto not found!")
 
     return crypto_data['CHANGEPCT24HOUR'], crypto_data['CHANGEPCTDAY'], crypto_data['CHANGEPCTHOUR']
 

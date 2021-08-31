@@ -7,6 +7,7 @@ import json
 from telegram.ext import *
 from telegram import *
 from tracker import get_prices, get_top_coins, get_graph_info, get_percentage_info
+from user_wallet import UserWallet
 from dotenv import load_dotenv
 import os
 
@@ -18,6 +19,8 @@ updater = Updater(token=os.getenv('BOT_TOKEN'), use_context=True)
 dispatcher = updater.dispatcher
 MAX_ALERT_LIMIT = 1000
 alerts_count = 0
+
+wallets = {}
 
 def get(update, context):
     chat_id = update.effective_chat.id
@@ -121,7 +124,7 @@ def thread_poller(chat_id,context,alert):
 
         time.sleep(DELAY)
 
-def alert(update,context):
+def alert(update, context):
     alerts_count = 0
     chat_id = update.effective_chat.id
     text = update.message.text.split()
@@ -146,6 +149,41 @@ def alert(update,context):
     except Exception as e:
         print(e)
         context.bot.send_message(chat_id=chat_id,text="Invalid input format")
+
+
+def add_crypto_to_wallet(update, context):
+    id = update.effective_chat.id
+    message = update.message.text
+    cryptos = message.split()[1:]
+    if id not in wallets.keys():
+        wallets.update({id: UserWallet(id)})
+    for c in cryptos:
+        wallets[id].add_crypto(c)
+    message = "Crypto(s) added"
+    update.message.reply_text(message)
+
+
+
+def show_wallet(update, context):
+    chat_id = update.effective_chat.id
+    percentages = wallets[chat_id].get_percentages()
+    message = ""
+    for el in percentages:
+        message += "Crypto: "+el[0]+"\nLast 24 hrs: "+el[1]+"%\nLast day: "+el[2]+"%\nLast hour: "+el[3]+"%\n\n"
+    context.bot.send_message(chat_id=chat_id,text=message)
+
+
+def remove_crypto_from_wallet(update, context):
+    id = update.effective_chat.id
+    message = update.message.text
+    cryptos = message.split()[1:]
+    if id not in wallets.keys():
+        return
+    for c in cryptos:
+        wallets[id].remove_crypto(c)
+    message = "Crypto(s) removed"
+    update.message.reply_text(message)
+
 
 def help(update, context):
     chat_id = update.effective_chat.id
@@ -203,7 +241,11 @@ def percentage(update, context):
     coin = data['coin']
     action = data['action']
     crypto_data = get_prices(coin)
-    last24hours, today, hour = get_percentage_info(coin)
+    try:
+        last24hours, today, hour = get_percentage_info(coin)
+    except Exception as e:
+        last24hours = e
+        today = hour = "-"
     message = f"{coin} percentage: \n\nPercentage last 24hrs: {last24hours} % \nPercentage today: {today} % \nPercentage last hour: {hour} % \n"
     context.bot.send_message(chat_id=chat_id, text=message)
 
@@ -247,6 +289,9 @@ dispatcher.add_handler(CommandHandler("get", get)) # links /get with the get fun
 dispatcher.add_handler(CommandHandler("top", top))
 dispatcher.add_handler(CommandHandler("graph", graph))
 dispatcher.add_handler(CommandHandler("alert", alert))
+dispatcher.add_handler(CommandHandler("add", add_crypto_to_wallet))
+dispatcher.add_handler(CommandHandler("remove", remove_crypto_from_wallet))
+dispatcher.add_handler(CommandHandler("wallet", show_wallet))
 
 
 
